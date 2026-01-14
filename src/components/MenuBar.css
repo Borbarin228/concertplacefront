@@ -1,0 +1,16 @@
+.menu-bar {
+    display: inline-block;
+}
+
+/* Адаптивность для MenuBar */
+@media (max-width: 768px) {
+    .menu-bar {
+        display: inline-block;
+    }
+}
+
+@media (max-width: 480px) {
+    .menu-bar {
+        display: inline-block;
+    }
+}
