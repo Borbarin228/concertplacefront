@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { useNavigate, Link } from 'react-router-dom';
 import { authService } from '../services/authService';
+import { userService } from '../services/userService';
 import './Login.css';
 
 interface LoginFormData {
@@ -58,7 +59,19 @@ const Login: React.FC = () => {
 
       if (result.user?.id) {
         localStorage.setItem('user_id', result.user.id);
-        localStorage.setItem('user', JSON.stringify(result.user));
+
+        try {
+          // Загружаем полные данные пользователя (включая is_admin)
+          const userResponse = await userService.getById(result.user.id);
+          const userData = userResponse.data?.data || userResponse.data || result.user;
+          console.log(userData);
+          localStorage.setItem('user', JSON.stringify(userData));
+          localStorage.setItem('avatar', userData.avatar);
+        } catch (e) {
+          console.error('Error fetching full user data after login:', e);
+          // На всякий случай сохраняем то, что есть
+          localStorage.setItem('user', JSON.stringify(result.user));
+        }
       }
 
       // Навигация после успешного входа

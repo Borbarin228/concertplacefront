@@ -10,6 +10,7 @@ import CreateConcert from "./components/CreateConcert";
 import ModerationConcerts from "./components/ModerationConcerts";
 import Main from "./components/Main";
 import Layout from "./components/Layout";
+import ModerationUsers from "./components/ModerationUsers";
 
 // Ленивая загрузка компонента Profile
 const Profile = React.lazy(() => import('./components/Profile'));
@@ -127,6 +128,11 @@ function App() {
                             <Route path="concerts" element={
                                 <AdminRoute>
                                     <ModerationConcerts />
+                                </AdminRoute>
+                            } />
+                            <Route path="users" element={
+                                <AdminRoute>
+                                    <ModerationUsers />
                                 </AdminRoute>
                             } />
                         </Route>

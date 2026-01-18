@@ -232,6 +232,7 @@ const Profile: React.FC = () => {
       // Обработка ошибок валидации
       if (err.response?.status === 422 && err.response?.data?.errors) {
         const validationErrors = err.response.data.errors;
+        // @ts-ignore
         const errorMessages = Object.values(validationErrors).flat();
         setError(errorMessages.join(', ') || 'Ошибка валидации данных');
       } else if (err.response?.status === 401) {
@@ -280,10 +281,23 @@ const Profile: React.FC = () => {
     return `${date.getDate()} ${months[date.getMonth()]} ${date.getFullYear()}`;
   };
 
-  const getAvatarUrl = (avatar: string | null | undefined) => {
-    if (!avatar) return null;
-    if (avatar.startsWith('http')) return avatar;
-    return `${API_CONFIG.BASE_URL.replace('/api', '')}${avatar}`;
+  const getAvatarUrl = (avatar: string | null | undefined): string | null => {
+    // Если нет аватара - возвращаем null
+    if (!avatar || avatar.trim() === '') return null;
+
+    const trimmed = avatar.trim();
+
+
+// @ts-ignore
+    if (trimmed.startsWith('http')) return trimmed;
+
+    const baseUrl = API_CONFIG.BASE_URL.replace('/api', '');
+    // @ts-ignore
+    const cleanBaseUrl = baseUrl.endsWith('/') ? baseUrl.slice(0, -1) : baseUrl;
+    // @ts-ignore
+    const cleanPath = trimmed.startsWith('/') ? trimmed.slice(1) : trimmed;
+
+    return `${cleanBaseUrl}/${cleanPath}`;
   };
 
   if (loading && !user) {

@@ -39,6 +39,7 @@ const ConcertPage: React.FC = () => {
         }
     }, [id]);
 
+    // @ts-ignore
     const fetchConcert = async (concertId: number) => {
         try {
             setLoading(true);

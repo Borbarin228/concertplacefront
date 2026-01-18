@@ -72,12 +72,8 @@ const Register: React.FC = () =>{
                 formData.append('avatar', data.avatar[0]);
             }
 
-            // Используем api напрямую для FormData (axios автоматически определит Content-Type)
-            const response = await api.post(API_CONFIG.ENDPOINTS.AUTH.REGISTER, formData, {
-                headers: {
-                    'Content-Type': 'multipart/form-data',
-                },
-            });
+
+            const response = await authService.register(formData);
 
             const result: RegisterResponse = response.data;
 

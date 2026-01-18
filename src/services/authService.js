@@ -34,9 +34,7 @@ export const authService = {
         return !!token;
     },
     getUserId: () => {
-        const userId = localStorage.getItem('user_id') ||
-            localStorage.getItem('id') ||
-            localStorage.getItem('userId');
+        const userId = localStorage.getItem('user_id');
 
         if (userId) {
             return parseInt(userId, 10);

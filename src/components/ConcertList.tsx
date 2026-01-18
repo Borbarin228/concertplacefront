@@ -81,7 +81,7 @@ const ConcertList: React.FC = () => {
             const result = response.data;
 
             if (result && result.data && Array.isArray(result.data)) {
-                // Фильтруем только подтвержденные концерты
+                console.log(result);
                 const acceptedConcerts = result.data.filter((concert: Concert) => concert.is_accepted === true);
                 setConcerts(acceptedConcerts);
                 
@@ -133,10 +133,9 @@ const ConcertList: React.FC = () => {
         }
     };
 
-    const getAvatarUrl = (avatar: string | null | undefined) => {
-        if (!avatar) return null;
-        if (avatar.startsWith('http')) return avatar;
-        return `${API_CONFIG.BASE_URL.replace('/api', '')}${avatar}`;
+    const getAvatarUrl = (avatar: string | null | undefined): string | null => {
+
+        return localStorage.getItem('avatar');
     };
 
     if (loading && concerts.length === 0) {

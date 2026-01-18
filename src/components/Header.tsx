@@ -1,34 +1,64 @@
 // components/Header.jsx
 // @ts-ignore
 import React, { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import './Header.css';
 import { authService } from '../services/authService';
-import MenuBar from './MenuBar';
+import Login from './Login';
+
+import { Button, Menu, MenuItem } from '@mui/material';
+import { ArrowDropDown } from '@mui/icons-material';
+
+const isAdminUser = (user: any) => {
+    const v = user?.is_admin;
+    return v === true || v === 1 || v === '1';
+};
 
 const Header = () => {
+    const [infoAnchorEl, setInfoAnchorEl] = useState<null | HTMLElement>(null);
     const navigate = useNavigate();
+    const location = useLocation();
     const [isAuthenticated, setIsAuthenticated] = useState(false);
     const [isAdmin, setIsAdmin] = useState(false);
     const [userId, setUserId] = useState<number | null>(null);
-    const [moderationMenuOpen, setModerationMenuOpen] = useState(false);
+    const [moderationAnchorEl, setModerationAnchorEl] = useState<null | HTMLElement>(null);
+
+
+    const handleUserMenuOpen = (event: React.MouseEvent<HTMLButtonElement>) => {
+        setInfoAnchorEl(event.currentTarget);
+    };
+
+    const handleUserMenuClose = () => {
+        setInfoAnchorEl(null);
+    };
 
     useEffect(() => {
         checkAuth();
-    }, []);
+    }, [location.pathname]);
 
     const checkAuth = () => {
         const authenticated = authService.isAuthenticated();
         setIsAuthenticated(authenticated);
-        
-        if (authenticated) {
-            const user = authService.getCurrentUser();
-            const id = authService.getUserId();
-            setUserId(id);
-            setIsAdmin(user?.is_admin === true || user?.is_admin === 1);
+
+        const userStr = localStorage.getItem('user');
+        let user: any = null;
+
+        if (userStr) {
+            try {
+                user = JSON.parse(userStr);
+            } catch (e) {
+                console.error('Error parsing user data in Header:', e);
+            }
         }
+
+        const id = authService.getUserId();
+        setUserId(id ?? null);
+
+        const adminFlag = isAdminUser(user);
+        setIsAdmin(authenticated && adminFlag);
     };
 
+    // @ts-ignore
     const handleLogout = async () => {
         try {
             await authService.logout();
@@ -46,16 +76,12 @@ const Header = () => {
         }
     };
 
-    const handleModerationMenuToggle = () => {
-        setModerationMenuOpen(!moderationMenuOpen);
-    };
-
-    const handleModerationMenuOpen = () => {
-        setModerationMenuOpen(true);
+    const handleModerationMenuOpen = (event: React.MouseEvent<HTMLButtonElement>) => {
+        setModerationAnchorEl(event.currentTarget);
     };
 
     const handleModerationMenuClose = () => {
-        setModerationMenuOpen(false);
+        setModerationAnchorEl(null);
     };
 
     return (
@@ -68,8 +94,65 @@ const Header = () => {
             <div className="header-center">
                 <Link to="/concert/list" style={{color: 'inherit', textDecoration: 'none'}}>Афиша</Link>
             </div>
+
+            <div>
+                <Button
+                id = "info-menu-button"
+                aria-controls={infoAnchorEl ? "info-menu" : undefined}
+                aria-haspopup="true"
+                aria-expanded={infoAnchorEl ? "true" : undefined}
+                onMouseEnter={handleUserMenuOpen}
+                endIcon={<ArrowDropDown />}
+                sx={{
+                        color: '#ffffff',
+                        textTransform: 'none',
+                        fontSize: '1.05rem',
+                        padding: '4px 10px',
+                        minWidth: 'auto',
+                        '&:hover': {
+                            backgroundColor: 'rgba(255, 255, 255, 0.1)'
+                        }
+                    }}
+                >
+                    ИНФОРМАЦИЯ
+                </Button>
+
+                <Menu
+                id = "info-menu"
+                anchorEl={infoAnchorEl}
+                open={Boolean(infoAnchorEl)}
+                onClose={handleUserMenuClose}
+                MenuListProps={{
+                    onMouseLeave: handleUserMenuClose,
+                    onMouseEnter: ()=>{},
+                }}
+                sx={{
+                    pointerEvents: 'auto', // Разрешаем взаимодействие
+                    '& .MuiPaper-root': {
+                        backgroundColor: '#ffffff',
+                        color: '#000000',
+                        boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
+                    },
+                }}
+                >
+                    <MenuItem onClick={()=>navigate('/main#info')}>
+                        ИНФОРМАЦИЯ
+                    </MenuItem>
+
+                    <MenuItem onClick={()=>navigate('/main#about-us')}>
+                        О НАС
+                    </MenuItem>
+
+                    <MenuItem onClick={()=>navigate('/main#offer')}>
+                        ЧТО МЫ ПРЕДЛАГАЕМ
+                    </MenuItem>
+
+
+                </Menu>
+            </div>
+
             <div style={{display: 'flex', alignItems: 'center', gap: '20px', position: 'relative'}}>
-                <MenuBar />
+
                 {isAuthenticated ? (
                     <>
                         <Link to={`/profile`} className="header-link">Профиль</Link>
@@ -80,34 +163,69 @@ const Header = () => {
                         >
                             Выйти
                         </button>
+
+
+
+
                         {isAdmin && (
-                            <div 
-                                className="moderation-menu-container"
-                                onMouseEnter={handleModerationMenuOpen}
-                                onMouseLeave={handleModerationMenuClose}
-                            >
-                                <button 
-                                    type="button"
-                                    className="header-link moderation-menu-button"
-                                    onClick={handleModerationMenuToggle}
+                            <div className="moderation-menu-container">
+                                <Button
+                                    id="moderation-button"
+                                    aria-controls={moderationAnchorEl ? 'moderation-menu' : undefined}
+                                    aria-haspopup="true"
+                                    aria-expanded={moderationAnchorEl ? 'true' : undefined}
+                                    onClick={handleModerationMenuOpen}
+                                    endIcon={<ArrowDropDown />}
+                                    sx={{
+                                        color: '#ffffff',
+                                        textTransform: 'none',
+                                        fontSize: '1.05rem',
+                                        padding: '4px 10px',
+                                        minWidth: 'auto',
+                                        '&:hover': {
+                                            backgroundColor: 'rgba(255, 255, 255, 0.1)'
+                                        }
+                                    }}
                                 >
                                     Модерация
-                                    <span className="moderation-arrow">▼</span>
-                                </button>
-                                {moderationMenuOpen && (
-                                    <div 
-                                        className="moderation-dropdown"
-                                        onMouseEnter={handleModerationMenuOpen}
-                                        onMouseLeave={handleModerationMenuClose}
+                                </Button>
+                                <Menu
+                                    id="moderation-menu"
+                                    anchorEl={moderationAnchorEl}
+                                    open={Boolean(moderationAnchorEl)}
+                                    onClose={handleModerationMenuClose}
+                                    sx={{
+                                        '& .MuiPaper-root': {
+                                            backgroundColor: '#ffffff',
+                                            color: '#000000',
+                                            boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
+                                        },
+                                        '& .MuiMenuItem-root': {
+                                            fontSize: '1rem',
+                                        },
+                                    }}
+                                >
+                                    <MenuItem
+                                        onClick={() => {
+                                            handleModerationMenuClose();
+                                            navigate('/moderation/concerts');
+                                        }}
                                     >
-                                        <Link to="/moderation/concerts" className="moderation-menu-item">
-                                            Концерты
-                                        </Link>
-                                        <div className="moderation-menu-item disabled">Пользователи</div>
-                                        <div className="moderation-menu-item disabled">Комментарии</div>
-                                    </div>
-                                )}
+                                        Концерты
+                                    </MenuItem>
+                                    <MenuItem
+                                        onClick={() => {
+                                            handleModerationMenuClose();
+                                            navigate('/moderation/users');
+                                        }}
+                                    >
+                                        Пользователи
+                                    </MenuItem>
+                                </Menu>
                             </div>
+
+
+
                         )}
                     </>
                 ) : (
