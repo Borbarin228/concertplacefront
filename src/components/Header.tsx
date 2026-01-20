@@ -3,77 +3,45 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import './Header.css';
-import { authService } from '../services/authService';
-import Login from './Login';
-
+import { useAuthStore } from '../stores/authStore';
 import { Button, Menu, MenuItem } from '@mui/material';
 import { ArrowDropDown } from '@mui/icons-material';
 
-const isAdminUser = (user: any) => {
-    const v = user?.is_admin;
-    return v === true || v === 1 || v === '1';
-};
-
 const Header = () => {
-    const [infoAnchorEl, setInfoAnchorEl] = useState<null | HTMLElement>(null);
     const navigate = useNavigate();
     const location = useLocation();
-    const [isAuthenticated, setIsAuthenticated] = useState(false);
-    const [isAdmin, setIsAdmin] = useState(false);
-    const [userId, setUserId] = useState<number | null>(null);
+
+    const {
+        user,
+        isAuthenticated,
+        isAdmin,
+        userId,
+        checkAuth,
+        logout,
+        initialize
+    } = useAuthStore();
+
+
+    const [infoAnchorEl, setInfoAnchorEl] = useState<null | HTMLElement>(null);
     const [moderationAnchorEl, setModerationAnchorEl] = useState<null | HTMLElement>(null);
 
 
-    const handleUserMenuOpen = (event: React.MouseEvent<HTMLButtonElement>) => {
-        setInfoAnchorEl(event.currentTarget);
-    };
+    useEffect(() => {
+        initialize();
+    }, []);
 
-    const handleUserMenuClose = () => {
-        setInfoAnchorEl(null);
-    };
 
     useEffect(() => {
         checkAuth();
     }, [location.pathname]);
 
-    const checkAuth = () => {
-        const authenticated = authService.isAuthenticated();
-        setIsAuthenticated(authenticated);
 
-        const userStr = localStorage.getItem('user');
-        let user: any = null;
-
-        if (userStr) {
-            try {
-                user = JSON.parse(userStr);
-            } catch (e) {
-                console.error('Error parsing user data in Header:', e);
-            }
-        }
-
-        const id = authService.getUserId();
-        setUserId(id ?? null);
-
-        const adminFlag = isAdminUser(user);
-        setIsAdmin(authenticated && adminFlag);
+    const handleInfoMenuOpen = (event: React.MouseEvent<HTMLButtonElement>) => {
+        setInfoAnchorEl(event.currentTarget);
     };
 
-    // @ts-ignore
-    const handleLogout = async () => {
-        try {
-            await authService.logout();
-            setIsAuthenticated(false);
-            setIsAdmin(false);
-            setUserId(null);
-            navigate('/login');
-        } catch (error) {
-            console.error('Logout error:', error);
-            // В любом случае очищаем состояние
-            setIsAuthenticated(false);
-            setIsAdmin(false);
-            setUserId(null);
-            navigate('/login');
-        }
+    const handleInfoMenuClose = () => {
+        setInfoAnchorEl(null);
     };
 
     const handleModerationMenuOpen = (event: React.MouseEvent<HTMLButtonElement>) => {
@@ -84,26 +52,59 @@ const Header = () => {
         setModerationAnchorEl(null);
     };
 
+
+    // @ts-ignore
+    const handleLogout = async () => {
+        try {
+            await logout();
+            navigate('/login');
+        } catch (error) {
+            console.error('Logout error:', error);
+            navigate('/login');
+        }
+    };
+
+
+    const getUserDisplayName = () => {
+        if (!user) return 'Профиль';
+        return user.name || 'Профиль';
+    };
+
     return (
         <header className="header-bar">
+
             <div className="header-logo">
-                <Link to="/" style={{color: 'inherit', textDecoration: 'none', display: 'flex', alignItems: 'center'}}>
+                <Link to="/" style={{
+                    color: 'inherit',
+                    textDecoration: 'none',
+                    display: 'flex',
+                    alignItems: 'center'
+                }}>
                     <span className="header-logo-icon">CE</span>
                 </Link>
             </div>
+
+
             <div className="header-center">
-                <Link to="/concert/list" style={{color: 'inherit', textDecoration: 'none'}}>Афиша</Link>
+                <Link to="/concert/list" style={{
+                    color: 'inherit',
+                    textDecoration: 'none'
+                }}>
+                    Афиша
+                </Link>
             </div>
 
-            <div>
+
+            <div className="info-menu-container">
                 <Button
-                id = "info-menu-button"
-                aria-controls={infoAnchorEl ? "info-menu" : undefined}
-                aria-haspopup="true"
-                aria-expanded={infoAnchorEl ? "true" : undefined}
-                onMouseEnter={handleUserMenuOpen}
-                endIcon={<ArrowDropDown />}
-                sx={{
+                    id="info-menu-button"
+                    aria-controls={infoAnchorEl ? "info-menu" : undefined}
+                    aria-haspopup="true"
+                    aria-expanded={infoAnchorEl ? "true" : undefined}
+                    onMouseEnter={handleInfoMenuOpen}
+                    onClick={handleInfoMenuOpen}
+                    endIcon={<ArrowDropDown />}
+                    sx={{
                         color: '#ffffff',
                         textTransform: 'none',
                         fontSize: '1.05rem',
@@ -118,56 +119,106 @@ const Header = () => {
                 </Button>
 
                 <Menu
-                id = "info-menu"
-                anchorEl={infoAnchorEl}
-                open={Boolean(infoAnchorEl)}
-                onClose={handleUserMenuClose}
-                MenuListProps={{
-                    onMouseLeave: handleUserMenuClose,
-                    onMouseEnter: ()=>{},
-                }}
-                sx={{
-                    pointerEvents: 'auto', // Разрешаем взаимодействие
-                    '& .MuiPaper-root': {
-                        backgroundColor: '#ffffff',
-                        color: '#000000',
-                        boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
-                    },
-                }}
+                    id="info-menu"
+                    anchorEl={infoAnchorEl}
+                    open={Boolean(infoAnchorEl)}
+                    onClose={handleInfoMenuClose}
+                    MenuListProps={{
+                        onMouseLeave: handleInfoMenuClose,
+                        onMouseEnter: () => {}, // Пустая функция для предотвращения закрытия
+                    }}
+                    sx={{
+                        pointerEvents: 'auto',
+                        '& .MuiPaper-root': {
+                            backgroundColor: '#ffffff',
+                            color: '#000000',
+                            boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
+                            minWidth: '200px',
+                        },
+                        '& .MuiMenuItem-root': {
+                            fontSize: '1rem',
+                            padding: '10px 16px',
+                        },
+                    }}
                 >
-                    <MenuItem onClick={()=>navigate('/main#info')}>
+                    <MenuItem onClick={() => {
+                        handleInfoMenuClose();
+                        navigate('/main#info');
+                    }}>
                         ИНФОРМАЦИЯ
                     </MenuItem>
 
-                    <MenuItem onClick={()=>navigate('/main#about-us')}>
+                    <MenuItem onClick={() => {
+                        handleInfoMenuClose();
+                        navigate('/main#about-us');
+                    }}>
                         О НАС
                     </MenuItem>
 
-                    <MenuItem onClick={()=>navigate('/main#offer')}>
+                    <MenuItem onClick={() => {
+                        handleInfoMenuClose();
+                        navigate('/main#offer');
+                    }}>
                         ЧТО МЫ ПРЕДЛАГАЕМ
                     </MenuItem>
-
-
                 </Menu>
             </div>
 
-            <div style={{display: 'flex', alignItems: 'center', gap: '20px', position: 'relative'}}>
-
+            {/* Правая часть: профиль и меню */}
+            <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '20px',
+                position: 'relative'
+            }}>
                 {isAuthenticated ? (
                     <>
-                        <Link to={`/profile`} className="header-link">Профиль</Link>
-                        <button 
-                            type="button" 
-                            onClick={handleLogout} 
+
+                        <div className="profile-menu-container">
+                            <Button
+                                id="profile-menu-button"
+                                aria-controls={infoAnchorEl ? "profile-menu" : undefined}
+                                aria-haspopup="true"
+                                aria-expanded={infoAnchorEl ? "true" : undefined}
+                                onClick={() => navigate('/profile')}
+                                sx={{
+                                    color: '#ffffff',
+                                    textTransform: 'none',
+                                    fontSize: '1.05rem',
+                                    padding: '4px 10px',
+                                    minWidth: 'auto',
+                                    '&:hover': {
+                                        backgroundColor: 'rgba(255, 255, 255, 0.1)'
+                                    }
+                                }}
+                            >
+                                {getUserDisplayName()}
+                            </Button>
+                        </div>
+
+
+                        <button
+                            type="button"
+                            onClick={handleLogout}
                             className="header-link header-link-button"
+                            style={{
+                                background: 'none',
+                                border: 'none',
+                                color: '#ffffff',
+                                cursor: 'pointer',
+                                fontSize: '1.05rem',
+                                padding: '4px 10px',
+                                textDecoration: 'none',
+                                '&:hover': {
+                                    backgroundColor: 'rgba(255, 255, 255, 0.1)'
+                                }
+                            }}
                         >
                             Выйти
                         </button>
 
 
-
-
-                        {isAdmin && (
+                        {isAdmin() && (
                             <div className="moderation-menu-container">
                                 <Button
                                     id="moderation-button"
@@ -189,6 +240,7 @@ const Header = () => {
                                 >
                                     Модерация
                                 </Button>
+
                                 <Menu
                                     id="moderation-menu"
                                     anchorEl={moderationAnchorEl}
@@ -199,9 +251,11 @@ const Header = () => {
                                             backgroundColor: '#ffffff',
                                             color: '#000000',
                                             boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
+                                            minWidth: '180px',
                                         },
                                         '& .MuiMenuItem-root': {
                                             fontSize: '1rem',
+                                            padding: '10px 16px',
                                         },
                                     }}
                                 >
@@ -213,6 +267,7 @@ const Header = () => {
                                     >
                                         Концерты
                                     </MenuItem>
+
                                     <MenuItem
                                         onClick={() => {
                                             handleModerationMenuClose();
@@ -223,13 +278,13 @@ const Header = () => {
                                     </MenuItem>
                                 </Menu>
                             </div>
-
-
-
                         )}
                     </>
                 ) : (
-                    <Link to="/login" className="header-link">Войти</Link>
+
+                    <Link to="/login" className="header-link">
+                        Войти
+                    </Link>
                 )}
             </div>
         </header>

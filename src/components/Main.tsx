@@ -1,10 +1,12 @@
-// Main.tsx - ФИНАЛЬНАЯ ИСПРАВЛЕННАЯ ВЕРСИЯ
+
 // @ts-ignore
 import React, { useEffect } from "react";
 import { useLocation } from 'react-router-dom';
 import { Link, useNavigate } from 'react-router-dom';
 import './Main.css';
+// @ts-ignore
 import artist1 from '../assets/artist1.png';
+// @ts-ignore
 import artist2 from '../assets/artist2.png';
 
 const Main: React.FC = () => {

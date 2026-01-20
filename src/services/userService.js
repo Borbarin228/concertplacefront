@@ -3,8 +3,8 @@ import {API_CONFIG} from "../config/api.js";
 const BASE = API_CONFIG.ENDPOINTS.USERS.BASE_METH
 
 export const userService = {
-    getAll: () =>
-        api.get(BASE),
+    getAll: (page = 1) =>
+        api.get(`${BASE}?page=${page}`),
     getById: (id) =>
         api.get(`${BASE}/${id}`),
     updateUser: (id, userData) => {
